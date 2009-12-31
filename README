@@ -1,55 +1,114 @@
-Net-KashFlow
+NAME
+    Net::KashFlow - Interact with KashFlow accounting web service
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
+SYNOPSIS
+        my $kf = Net::KashFlow->new(username => $u, password => $p);
 
-A README file is required for CPAN modules since CPAN extracts the README
-file from a module distribution so that people browsing the archive
-can use it to get an idea of the module's uses. It is usually a good idea
-to provide version information here so that people can decide whether
-fixes for the module are worth downloading.
+        my $c = $kf->get_customer($cust_email);
+        my $i = $kf->create_invoice({ 
+            InvoiceNumber => time, CustomerID => $c->CustomerID 
+        });
 
+        $i->add_line({ Quantity => 1, Description => "Widgets", Rate => 100 })
 
-INSTALLATION
+        $i->pay({ PayAmount => 100 });
 
-To install this module, run the following commands:
+METHODS
+  new
+    Simple constructor - requires "username" and "password" named
+    parameters.
 
-	perl Makefile.PL
-	make
-	make test
-	make install
+  get_customer($id | $email)
+    Returns a Net::KashFlow::Customer object for the given customer. If the
+    parameter passed has an "@" sign then this is treated as an email
+    address and the customer looked up email address; otherwise the customer
+    is looked up by customer code. If no customer is found in the database,
+    nothing is returned.
 
-SUPPORT AND DOCUMENTATION
+  get_customer_by_id($internal_id)
+    Like "get_customer", but works on the internal ID of the customer.
 
-After installing, you can find documentation for this module with the
-perldoc command.
+  get_customers
+    Returns all customers
 
-    perldoc Net::KashFlow
+  create_customer({ Name => "...", Address => "...", ... });
+    Inserts a new customer into the database, returning a
+    Net::KashFlow::Customer object.
 
-You can also look for information at:
+  get_invoice($your_id)
+  get_invoice_by_id($internal_id)
+    Returns a Net::KashFlow::Invoice object representing the invoice.
 
-    RT, CPAN's request tracker
-        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Net-KashFlow
+  create_invoice({ ... })
+Net::KashFlow::Customer
+        my $c = $kf->get_customer($email);
 
-    AnnoCPAN, Annotated CPAN documentation
-        http://annocpan.org/dist/Net-KashFlow
+        $c->Telephone("+44.500123456");
+        $c->update;
 
-    CPAN Ratings
-        http://cpanratings.perl.org/d/Net-KashFlow
+        print $c->Address1(), $c->Address2();
 
-    Search CPAN
-        http://search.cpan.org/dist/Net-KashFlow/
+    Customer objects have accessors as specified by
+    "http://accountingapi.com/manual_class_customer.asp" - these accessors
+    are not "live" in that changes to them are only sent to KashFlow on call
+    to the "update" method.
 
+    This package also has a "delete" method to remove the customer from the
+    database, and an "invoices" method which returns all the
+    "Net::KashFlow::Invoice" objects assigned to this customer.
 
-COPYRIGHT AND LICENCE
+Net::KashFlow::Invoice
+        my @i = $kf->get_customer($email)->invoices;
+        for (@i) { $i->Paid(1); $i->update }
 
-Copyright (C) 2009 Simon Cozens
+    Similarly to Customer, fields found at
+    http://accountingapi.com/manual_class_invoice.asp
 
-This program is free software; you can redistribute it and/or modify it
-under the terms of either: the GNU General Public License as published
-by the Free Software Foundation; or the Artistic License.
+    Also:
 
-See http://dev.perl.org/licenses/ for more information.
+        $i->add_line({ Quantity => 1, Description => "Widgets", Rate => 100 });
+        $i->pay({ PayAmount => 100 });
+
+AUTHOR
+    Simon Cozens, "<simon at simon-cozens.org>"
+
+BUGS
+    Please report any bugs or feature requests to "bug-net-kashflow at
+    rt.cpan.org", or through the web interface at
+    <http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Net-KashFlow>. I will be
+    notified, and then you'll automatically be notified of progress on your
+    bug as I make changes.
+
+    I am aware that this module is WOEFULLY INCOMPLETE and I'm looking
+    forward to receiving patches to add new functionality to it. Currently
+    it does what I want and I don't have much incentive to finish it. :/
+
+SUPPORT
+    You can find documentation for this module with the perldoc command.
+
+        perldoc Net::KashFlow
+
+    You can also look for information at:
+
+    * RT: CPAN's request tracker
+        <http://rt.cpan.org/NoAuth/Bugs.html?Dist=Net-KashFlow>
+
+    * AnnoCPAN: Annotated CPAN documentation
+        <http://annocpan.org/dist/Net-KashFlow>
+
+    * CPAN Ratings
+        <http://cpanratings.perl.org/d/Net-KashFlow>
+
+    * Search CPAN
+        <http://search.cpan.org/dist/Net-KashFlow/>
+
+ACKNOWLEDGEMENTS
+COPYRIGHT & LICENSE
+    Copyright 2009 Simon Cozens.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the terms of either: the GNU General Public License as published
+    by the Free Software Foundation; or the Artistic License.
+
+    See http://dev.perl.org/licenses/ for more information.
 

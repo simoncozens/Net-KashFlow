@@ -12,6 +12,22 @@ Net::KashFlow - Interact with KashFlow accounting web service
 
     my $kf = Net::KashFlow->new(username => $u, password => $p);
 
+    my $c = $kf->get_customer($cust_email);
+    my $i = $kf->create_invoice({ 
+        InvoiceNumber => time, CustomerID => $c->CustomerID 
+    });
+
+    $i->add_line({ Quantity => 1, Description => "Widgets", Rate => 100 })
+
+    $i->pay({ PayAmount => 100 });
+
+=head1 WARNING
+
+This module is incomplete. It does not implement all of the KashFlow
+API. Please find the github repository at
+http://github.com/simoncozens/Net-KashFlow and send me pull requests for
+your newly-implemented features. Thank you.
+
 =head1 METHODS
 
 =head2 new
@@ -31,7 +47,7 @@ sub new {
     bless { %args }, $self;
 }
 
-sub c {
+sub _c {
     my ($self, $method, @args) = @_;
     my ($result, $status, $explanation) = 
         KashFlowAPI->$method($self->{username}, $self->{password}, @args);
@@ -54,7 +70,7 @@ sub get_customer {
     my $method = "GetCustomer"; if ($thing =~ /@/) { $method.="ByEmail" }
     if ($by_id) { $method.="ByID" }
     my $customer;
-    eval { $customer = $self->c($method, $thing) };
+    eval { $customer = $self->_c($method, $thing) };
     if ($@ =~ /no customer/) { return } die $@."\n" if $@;
     $customer = bless $customer, "Net::KashFlow::Customer";
     $customer->{kf} = $self;
@@ -78,7 +94,7 @@ Returns all customers
 sub get_customers { 
     my $self = shift;
     return map { $_->{kf} = $self; bless $_, "Net::KashFlow::Customer" }
-        @{$self->c("GetCustomers")->{Customer}};
+        @{$self->_c("GetCustomers")->{Customer}};
 }
 
 =head2 create_customer({ Name => "...", Address => "...", ... });
@@ -90,7 +106,7 @@ Net::KashFlow::Customer object.
 
 sub create_customer {
     my ($self, $data) = @_;
-    my $id = $self->c("InsertCustomer", $data);
+    my $id = $self->_c("InsertCustomer", $data);
     return $self->get_customer_by_id($id);
 }
 
@@ -106,10 +122,11 @@ sub get_invoice {
     my ($self, $thing, $by_id) = @_;
     my $method = "GetInvoice"; if ($by_id) { $method.="ByID" }
     my $invoice;
-    eval { $invoice = $self->c($method, $thing) };
+    eval { $invoice = $self->_c($method, $thing) };
     if ($@ =~ /no invoice/) { return } die $@."\n" if $@;
     $invoice = bless $invoice, "Net::KashFlow::Invoice";
     $invoice->{kf} = $self;
+    $invoice->{Lines} = bless $invoice->{Lines}, "InvoiceLineSet"; # Urgh
     return $invoice;
 }
 sub get_invoice_by_id { $_[0]->get_invoice($_[1], 1) }
@@ -120,7 +137,7 @@ sub get_invoice_by_id { $_[0]->get_invoice($_[1], 1) }
 
 sub create_invoice {
     my ($self, $data) = @_;
-    my $id = $self->c("InsertInvoice", $data);
+    my $id = $self->_c("InsertInvoice", $data);
     return $self->get_invoice($id);
 }   
 
@@ -130,13 +147,13 @@ use base 'Class::Accessor';
 sub update {
     my $self = shift;
     my $copy = { %$self }; delete $copy->{kf};
-    $self->{kf}->c("Update".$self->_this(), $copy);
+    $self->{kf}->_c("Update".$self->_this(), $copy);
 }
 
 sub delete {
     my $self = shift;
     my $copy = { %$self }; delete $copy->{kf};
-    $self->{kf}->c("Delete".$self->_this(), $copy);
+    $self->{kf}->_c("Delete".$self->_this(), $copy);
 }
 
 package Net::KashFlow::Customer;
@@ -171,8 +188,10 @@ sub _this { "Customer" }
 
 sub invoices {
     my $self = shift;
-    return map { $_->{kf} = $self->{kf}; bless $_, "Net::KashFlow::Invoice" }
-        @{$self->{kf}->c("GetInvoicesForCustomer", $self->CustomerID)->{Invoice}};
+    return map { $_->{kf} = $self->{kf}; 
+        $_->{Lines} = bless $_->{Lines}, "InvoiceLineSet"; # Urgh
+        bless $_, "Net::KashFlow::Invoice" 
+    } @{$self->{kf}->_c("GetInvoicesForCustomer", $self->CustomerID)->{Invoice}};
 }
 
 package Net::KashFlow::Invoice;
@@ -195,15 +214,20 @@ http://accountingapi.com/manual_class_invoice.asp
 Also:
 
     $i->add_line({ Quantity => 1, Description => "Widgets", Rate => 100 });
+    $i->pay({ PayAmount => 100 });
 
 =cut
 
 sub add_line {
     my ($self, $data) = @_;
-    $self->{kf}->c("InsertInvoiceLine", $self->InvoiceDBID, $data );
+    $self->{kf}->_c("InsertInvoiceLine", $self->InvoiceDBID, $data );
 }
 
-
+sub pay {
+    my ($self, $data) = @_;
+    $data->{PayInvoice} = $self->{InvoiceNumber};
+    $self->{kf}->_c("InsertInvoicePayment", $data );
+}
 
 =head1 AUTHOR
 
@@ -215,8 +239,9 @@ Please report any bugs or feature requests to C<bug-net-kashflow at rt.cpan.org>
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Net-KashFlow>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
 
-
-
+I am aware that this module is WOEFULLY INCOMPLETE and I'm looking
+forward to receiving patches to add new functionality to it. Currently
+it does what I want and I don't have much incentive to finish it. :/
 
 =head1 SUPPORT
 
@@ -250,6 +275,9 @@ L<http://search.cpan.org/dist/Net-KashFlow/>
 
 =head1 ACKNOWLEDGEMENTS
 
+Thanks to the UK Free Software Network (http://www.ukfsn.org/) for their
+support of this module's development. For free-software-friendly hosting
+and other Internet services, try UKFSN.
 
 =head1 COPYRIGHT & LICENSE
 
@@ -260,7 +288,6 @@ under the terms of either: the GNU General Public License as published
 by the Free Software Foundation; or the Artistic License.
 
 See http://dev.perl.org/licenses/ for more information.
-
 
 =cut
 

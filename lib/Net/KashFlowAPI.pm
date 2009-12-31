@@ -1165,7 +1165,7 @@ UpdateCustomer => {
   }, # end UpdateCustomer
 ); # end my %methods
 
-use SOAP::Lite; #qw/trace debug/;
+use SOAP::Lite;
 use Exporter;
 use Carp ();
 
@@ -1257,6 +1257,23 @@ sub AUTOLOAD {
     my $method = substr($AUTOLOAD, rindex($AUTOLOAD, '::') + 2);
     return if $method eq 'DESTROY' || $method eq 'want_som';
     die "Unrecognized method '$method'. List of available method(s): @EXPORT_OK\n";
+}
+
+sub SOAP::Serializer::as_InvoiceLineSet {
+   my $self = shift;
+   my($value, $name, $type, $attr) = @_;
+   return [ "Lines", {}, 
+     [ map {$self->encode_object($_)}  @{$value->{anyType}}  ]
+     ];
+}
+
+
+sub SOAP::Serializer::as_InvoiceLine {
+   my $self = shift;
+   my($value, $name, $type, $attr) = @_;
+   return ["anyType", {'xsi:type' => 'InvoiceLine', %$attr}, 
+   [map {$self->encode_object($value->{$_}, $_)} keys %$value]
+    ]
 }
 
 1;
