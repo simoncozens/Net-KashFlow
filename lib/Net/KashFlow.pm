@@ -124,6 +124,7 @@ sub get_invoice {
     my $invoice;
     eval { $invoice = $self->_c($method, $thing) };
     if ($@ =~ /no invoice/) { return } die $@."\n" if $@;
+    return unless $invoice->{InvoiceNumber};
     $invoice = bless $invoice, "Net::KashFlow::Invoice";
     $invoice->{kf} = $self;
     $invoice->{Lines} = bless $invoice->{Lines}, "InvoiceLineSet"; # Urgh
