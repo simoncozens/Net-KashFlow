@@ -1262,6 +1262,7 @@ sub AUTOLOAD {
 sub SOAP::Serializer::as_InvoiceLineSet {
    my $self = shift;
    my($value, $name, $type, $attr) = @_;
+   if ( ref $value ne 'ARRAY' ) { goto &SOAP::Serializer::as_InvoiceLine; }
    return [ "Lines", {}, 
      [ map {$self->encode_object($_)}  @{$value->{anyType}}  ]
      ];
