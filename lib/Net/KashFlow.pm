@@ -55,6 +55,23 @@ sub _c {
     return $result;
 }
 
+=head2 get_supplier($id)
+
+Returns a Net::KashFlow::Supplier object for the supplier
+
+=cut
+
+sub get_supplier {
+    my ($self, $thing) = @_;
+    my $supplier;
+    eval { $supplier = $self->_c("GetSupplier", $thing) };
+    die $@."\n" if $@;
+    return undef unless $supplier->{SupplierID};
+    $supplier = bless $supplier, "Net::KashFlow::Supplier";
+    $supplier->{kf} = $self;
+    return $supplier;
+}
+
 =head2 get_customer($id | $email)
 
 Returns a Net::KashFlow::Customer object for the given customer. If the
@@ -142,6 +159,24 @@ sub create_invoice {
     return $self->get_invoice($id);
 }   
 
+=head2 delete_invoice($invoice_id)
+
+Delete an invoice. Returns true if invoice deleted
+
+=cut
+
+sub delete_invoice {
+    my ($self, $data) = @_;
+    my $invoice = $self->get_invoice($data);
+    return undef if ! $invoice;
+    eval ( $self->_c("DeleteInvoice", $data) );
+    die $@."\n" if $@;
+    $invoice = undef;
+    $invoice = $self->get_invoice($data);
+    return undef if $invoice->{InvoiceNumber};
+    return 1;
+}
+
 =head2 get_receipt($id)
 
 Returns a Net::KashFlow::Receipt object representing the receipt
@@ -177,6 +212,41 @@ sub create_receipt {
     my ($self, $data) = @_;
     my $id = $self->_c("InsertReceipt", $data);
     return $self->get_receipt($id);
+}
+
+=head2 get_payment($id)
+
+Returns a Net::KashFlow::Payment object for an invoice payment.
+
+=cut
+
+sub get_payment {
+    my ($self, $data) = @_;
+    my $payment;
+    eval { $payment = $self->_c("GetInvoicePayment", $data) };
+    die $@."\n" if $@;
+    return unless $payment->{PayID};
+    $payment = bless $payment, "Net::KashFlow::Payment";
+    $payment->{kf} = $self;
+    return $payment;
+}
+
+=head2 delete_payment({...})
+
+Deletes a specific payment
+
+Returns 1 if payment deleted
+
+=cut
+
+sub delete_payment {
+    my ($self, $data) = @_;
+    my $p = $self->get_payment($data);
+    eval { $self->_c("DeleteInvoicePayment", $data) };
+    die $@."\n" if $@;
+    $p = undef; $p = $self->get_payment($data);
+    return undef if $p->{PayID};
+    return 1;
 }
 
 package Net::KashFlow::Base;
@@ -267,6 +337,11 @@ sub pay {
     $self->{kf}->_c("InsertInvoicePayment", $data );
 }
 
+sub delete {
+    my ($self, $data) = @_;
+    $self->{kf}->_c("DeleteInvoice", $data);
+}
+
 package Net::KashFlow::Receipt;
 use base 'Net::KashFlow::Base';
 sub _this { "Receipt" }
@@ -300,6 +375,25 @@ sub pay {
     $data->{PayInvoice} = $self->{InvoiceNumber};
     $self->{kf}->_c("InsertReceiptPayment", $data );
 }
+
+package Net::KashFlow::Payment;
+use base 'Net::KashFlow::Base';
+sub _this { "Payment" }
+__PACKAGE__->mk_accessors(qw/
+PayID PayInvoice PayDate PayNote PayMethod PayAccount PayAmount
+/);
+
+=head1 Net::KashFlow::Payment
+
+Payment object. Fields: http://accountingapi.com/manual_class_payment.asp
+
+=cut
+
+package Net::KashFlow::Supplier;
+use base 'Net::KashFlow::Base';
+sub _this { "Supplier" }
+__PACKAGE__->mk_accessors(qw/SupplierID Code/);
+
 
 =head1 AUTHOR
 
