@@ -142,6 +142,43 @@ sub create_invoice {
     return $self->get_invoice($id);
 }   
 
+=head2 get_receipt($id)
+
+Returns a Net::KashFlow::Receipt object representing the receipt
+
+=cut
+
+sub get_receipt {
+    my ($self, $thing, $by_id) = @_;
+    my $method = "GetReceipt"; if ($by_id) { $method.="ByID" }
+    my $receipt;
+    eval { $receipt = $self->_c($method, $thing) };
+    if ($@ =~ /no receipt/) { return } die $@."\n" if $@;
+    return unless $receipt->{InvoiceNumber};
+    $receipt = bless $receipt, "Net::KashFlow::Receipt";
+    $receipt->{kf} = $self;
+    $receipt->{Lines} = bless $receipt->{Lines}, "InvoiceLineSet"; # Urgh
+    return $receipt;
+}
+
+sub get_receipt_by_id { $_[0]->get_receipt($_[1], 1) }
+
+=head2 create_receipt ({ ... })
+
+Create a new receipt. For details, see
+
+http://accountingapi.com/manual_methods_InsertReceipt.asp
+
+Returns a Net::KashFlow::Receipt object
+
+=cut
+
+sub create_receipt {
+    my ($self, $data) = @_;
+    my $id = $self->_c("InsertReceipt", $data);
+    return $self->get_receipt($id);
+}
+
 package Net::KashFlow::Base;
 use base 'Class::Accessor';
 
@@ -201,7 +238,7 @@ sub _this { "Invoice" }
 __PACKAGE__->mk_accessors(qw/
 DueDate NetAmount ProjectID Lines CustomerReference InvoiceDate InvoiceNumber
 SuppressTotal CustomerID Customer CurrencyCode ReadableString ExchangeRate
- VATAmount AmountPaid Paid InvoiceDBID 
+ VATAmount AmountPaid Paid InvoiceDBID EstimateCategory NetAmount
  /);
 
 =head1 Net::KashFlow::Invoice
@@ -228,6 +265,40 @@ sub pay {
     my ($self, $data) = @_;
     $data->{PayInvoice} = $self->{InvoiceNumber};
     $self->{kf}->_c("InsertInvoicePayment", $data );
+}
+
+package Net::KashFlow::Receipt;
+use base 'Net::KashFlow::Base';
+sub _this { "Receipt" }
+__PACKAGE__->mk_accessors(qw/
+InvoiceDBID InvoiceNumber InvoiceDate DueDate Paid CustomerID 
+CustomerReference NetAmount VatAmount AmountPaid Lines
+/);
+
+=head1 Net::KashFlow::Receipt
+
+    my @i = $kf->get_customer($email)->receipts;
+    for (@i) { $i->Paid(1); $i->update }
+
+Just like Net::KashFlow::Invoice but for receipts. Fields at 
+http://accountingapi.com/manual_class_invoice.asp
+
+Also:
+
+    $i->add_line({ Quantity => 1, Description => "Widgets", Rate => 100 });
+    $i->pay({ PayAmount => 100 });
+
+=cut
+
+sub add_line {
+    my ($self, $data) = @_;
+    $self->{kf}->_c("InsertReceiptLine", $self->InvoiceDBID, $data );
+}
+
+sub pay {
+    my ($self, $data) = @_;
+    $data->{PayInvoice} = $self->{InvoiceNumber};
+    $self->{kf}->_c("InsertReceiptPayment", $data );
 }
 
 =head1 AUTHOR
