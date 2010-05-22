@@ -37,7 +37,7 @@ parameters.
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 sub new {
     my ($self, %args) = @_;
@@ -149,6 +149,29 @@ sub get_invoice {
 }
 sub get_invoice_by_id { $_[0]->get_invoice($_[1], 1) }
 
+=head2 get_invoices_for_customer($customerID)
+
+Returns an array containing all of the invoices for the specified customer
+
+=cut
+
+sub get_invoices_for_customer {
+    my ($self, $customer) = @_;
+    my $c = $self->get_customer_by_id($customer);
+    die "No such customer" unless $c;
+    my $invoices = ();
+    eval { $invoices = $self->_c("GetInvoicesForCustomer", $customer) };
+    die $@."\n" if $@;
+    my @invoices = ();
+    for my $i (@{$invoices->{Invoice}}) {
+        $i = bless $i, "Net::KashFlow::Invoice";
+        $i->{kf} = $self;
+        $i->{Lines} = bless $i->{Lines}, "InvoiceLineSet";
+        push @invoices, $i;
+    }
+    return @invoices;
+}
+
 =head2 create_invoice({ ... })
 
 =cut
@@ -214,13 +237,17 @@ sub create_receipt {
     return $self->get_receipt($id);
 }
 
-=head2 get_payment($id)
+=head2 get_invoice_payment($id)
+
+Returns a Net::KashFlow::Payment object for an invoice payment.
+
+=head2 get_receipt_payment($id)
 
 Returns a Net::KashFlow::Payment object for an invoice payment.
 
 =cut
 
-sub get_payment {
+sub get_invoice_payment {
     my ($self, $data) = @_;
     my $payment;
     eval { $payment = $self->_c("GetInvoicePayment", $data) };
@@ -239,7 +266,7 @@ Returns 1 if payment deleted
 
 =cut
 
-sub delete_payment {
+sub delete_invoice_payment {
     my ($self, $data) = @_;
     my $p = $self->get_payment($data);
     eval { $self->_c("DeleteInvoicePayment", $data) };
