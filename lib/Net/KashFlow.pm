@@ -149,6 +149,22 @@ sub get_invoice {
 }
 sub get_invoice_by_id { $_[0]->get_invoice($_[1], 1) }
 
+=head2 get_invoice_pdf($id)
+
+Returns the URI for a PDF of the specified invoice
+
+=cut
+
+sub get_invoice_pdf {
+    my ($self, $id) = @_;
+    my $i = $self->get_invoice($id);
+    return unless $i;
+    my $uri = undef;
+    eval {$uri = $self->_c("PrintInvoice", $id)};
+    die $@."\n" if $@;
+    return $uri;
+}
+
 =head2 get_invoices_for_customer($customerID)
 
 Returns an array containing all of the invoices for the specified customer
