@@ -243,7 +243,17 @@ sub get_invoices_for_customer {
     eval { $invoices = $self->_c("GetInvoicesForCustomer", $customer) };
     die $@."\n" if $@;
     my @invoices = ();
-    for my $i (@{$invoices->{Invoice}}) {
+    if ( ref $invoices->{Invoice} eq 'ARRAY' ) {
+        for my $i (@{$invoices->{Invoice}}) {
+            $i = bless $i, "Net::KashFlow::Invoice";
+            $i->{kf} = $self;
+            $i->{Lines} = bless $i->{Lines}, "InvoiceLineSet";
+            push @invoices, $i;
+        }
+    }
+    else {
+        my $i = $invoices->{Invoice};
+        return unless $i->{InvoiceNumber};
         $i = bless $i, "Net::KashFlow::Invoice";
         $i->{kf} = $self;
         $i->{Lines} = bless $i->{Lines}, "InvoiceLineSet";
@@ -446,6 +456,7 @@ sub pay {
 
 sub delete {
     my ($self, $data) = @_;
+    $data->{InvoiceNumber} = $self->{InvoiceNumber};
     $self->{kf}->_c("DeleteInvoice", $data);
 }
 
