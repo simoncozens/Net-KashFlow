@@ -165,6 +165,22 @@ sub get_invoice_pdf {
     return $uri;
 }
 
+=head2 get_invoice_paypal_link($id)
+
+Returns a Paypal payment link for the specified invoice ID.
+
+=cut
+
+sub get_invoice_paypal_link {
+    my ($self, $id) = @_;
+    my $i = $self->get_invoice($id);
+    return unless $i;
+    my $uri = undef;
+    eval {$uri = $self->_c("GetPaypalLink", $id)};
+    die $@."\n" if $@;
+    return $uri;
+}
+
 =head2 get_overdue_invoices
 
 Returns an array of overdue invoices. Each element is a
