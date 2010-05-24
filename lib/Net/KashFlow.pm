@@ -546,6 +546,11 @@ sub add_line {
     $self->{kf}->_c("InsertReceiptLine", $self->InvoiceDBID, $data );
 }
 
+sub delete_line {
+    my ($self, $id) = @_;
+    $self->{kf}->_c("DeleteReceiptLine", $id, $self->{InvoiceNumber} );
+}
+
 sub pay {
     my ($self, $data) = @_;
     $data->{PayInvoice} = $self->{InvoiceNumber};
