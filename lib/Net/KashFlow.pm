@@ -350,8 +350,6 @@ sub get_receipts_for_supplier {
     eval { $rs = $self->_c("GetReceiptsForSupplier", $s->SupplierID) };
     die $@."\n" if $@;
     my @rs = ();
-    use Data::Dumper; print Dumper $rs;
-    return;
     if ( ref $rs->{Invoice} eq 'ARRAY' ) {
         for my $r (@{$rs->{Invoice}}) {
             $r = bless $r, "Net::KashFlow::Receipt";
