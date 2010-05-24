@@ -62,15 +62,24 @@ Returns a Net::KashFlow::Supplier object for the supplier
 =cut
 
 sub get_supplier {
-    my ($self, $thing) = @_;
+    my ($self, $thing, $by_id) = @_;
+    my $method = "GetSupplier"; if ($by_id) { $method.="ByID" }
     my $supplier;
-    eval { $supplier = $self->_c("GetSupplier", $thing) };
+    eval { $supplier = $self->_c($method, $thing) };
     die $@."\n" if $@;
     return undef unless $supplier->{SupplierID};
     $supplier = bless $supplier, "Net::KashFlow::Supplier";
     $supplier->{kf} = $self;
     return $supplier;
 }
+
+=head2 get_supplier_by_id($id)
+
+Returns the Net::KashFlow::Supplier object as specified by the ID
+
+=cut
+
+sub get_supplier_by_id { $_[0]->get_supplier($_[1], 1) }
 
 =head2 get_customer($id | $email)
 
@@ -327,6 +336,41 @@ sub get_receipt {
 
 sub get_receipt_by_id { $_[0]->get_receipt($_[1], 1) }
 
+=head2 get_receipts_for_supplier($id)
+
+Returns an array containing all receipts for the specified supplier.
+
+=cut
+
+sub get_receipts_for_supplier {
+    my ($self,$id) = @_;
+    my $s = $self->get_supplier_by_id($id);
+    die "No such supplier" unless $s;
+    my $rs = ();
+    eval { $rs = $self->_c("GetReceiptsForSupplier", $s->SupplierID) };
+    die $@."\n" if $@;
+    my @rs = ();
+    use Data::Dumper; print Dumper $rs;
+    return;
+    if ( ref $rs->{Invoice} eq 'ARRAY' ) {
+        for my $r (@{$rs->{Invoice}}) {
+            $r = bless $r, "Net::KashFlow::Receipt";
+            $r->{kf} = $self;
+            $r->{Lines} = bless $r->{Lines}, "InvoiceLineSet";
+            push @rs, $r;
+        }
+    }
+    else {
+        my $r = $rs->{Invoice};
+        return unless $r->{InvoiceNumber};
+        $r = bless $r, "Net::KashFlow::Receipt";
+        $r->{kf} = $self;
+        $r->{Lines} = bless $r->{Lines}, "InvoiceLineSet";
+        push @rs, $r;
+    }
+    return @rs;
+}
+
 =head2 create_receipt ({ ... })
 
 Create a new receipt. For details, see
@@ -527,7 +571,6 @@ package Net::KashFlow::Supplier;
 use base 'Net::KashFlow::Base';
 sub _this { "Supplier" }
 __PACKAGE__->mk_accessors(qw/SupplierID Code/);
-
 
 =head1 AUTHOR
 
