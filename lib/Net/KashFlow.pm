@@ -165,6 +165,70 @@ sub get_invoice_pdf {
     return $uri;
 }
 
+=head2 get_overdue_invoices
+
+Returns an array of overdue invoices. Each element is a
+Net::KashFlow::Invoice object
+
+=cut
+
+sub get_overdue_invoices {
+    my ($self) = @_;
+    my $invoices = undef;
+    eval { $invoices = $self->_c("GetInvoices_Overdue") };
+    die $@."\n" if $@;
+    my @invoices = ();
+    if ( ref $invoices->{Invoice} eq 'ARRAY' ) {
+        for my $i (@{$invoices->{Invoice}}) {
+            $i = bless $i, "Net::KashFlow::Invoice";
+            $i->{kf} = $self;
+            $i->{Lines} = bless $i->{Lines}, "InvoiceLineSet";
+            push @invoices, $i;
+        }
+    }
+    else {
+        my $i = $invoices->{Invoice};
+        return unless $i->{InvoiceNumber};
+        $i = bless $i, "Net::KashFlow::Invoice";
+        $i->{kf} = $self;
+        $i->{Lines} = bless $i->{Lines}, "InvoiceLineSet";
+        push @invoices, $i;
+    }
+    return @invoices;
+}
+
+=head2 get_unpaid_invoices
+
+Returns an array of unpaid invoices. Each element is a
+Net::KashFlow::Invoice object
+
+=cut
+
+sub get_unpaid_invoices {
+    my ($self) = @_;
+    my $invoices = undef;
+    eval { $invoices = $self->_c("GetInvoices_Unpaid") };
+    die $@."\n" if $@;
+    my @invoices = ();
+    if ( ref $invoices->{Invoice} eq 'ARRAY' ) {
+        for my $i (@{$invoices->{Invoice}}) {
+            $i = bless $i, "Net::KashFlow::Invoice";
+            $i->{kf} = $self;
+            $i->{Lines} = bless $i->{Lines}, "InvoiceLineSet";
+            push @invoices, $i;
+        }
+    }
+    else {
+        my $i = $invoices->{Invoice};
+        return unless $i->{InvoiceNumber};
+        $i = bless $i, "Net::KashFlow::Invoice";
+        $i->{kf} = $self;
+        $i->{Lines} = bless $i->{Lines}, "InvoiceLineSet";
+        push @invoices, $i;
+    }
+    return @invoices;
+}
+
 =head2 get_invoices_for_customer($customerID)
 
 Returns an array containing all of the invoices for the specified customer

@@ -202,6 +202,24 @@ GetInvoicesForCustomer => {
       SOAP::Data->new(name => 'CustID', type => 'xsd:int', attr => {}),
     ], # end parameters
   }, # end GetInvoicesForCustomer
+GetInvoices_Unpaid => {
+    endpoint => 'https://securedwebapp.com/api/service.asmx',
+    soapaction => 'KashFlow/GetInvoices_Unpaid',
+    namespace => 'KashFlow',
+    parameters => [
+    SOAP::Data->new(name => 'UserName', type => 'xsd:string', attr => {}),
+    SOAP::Data->new(name => 'Password', type => 'xsd:string', attr => {}),
+    ], # end parameters
+  }, # end GetInvoices_Unpaid
+GetInvoices_Overdue => {
+    endpoint => 'https://securedwebapp.com/api/service.asmx',
+    soapaction => 'KashFlow/GetInvoices_Overdue',
+    namespace => 'KashFlow',
+    parameters => [
+    SOAP::Data->new(name => 'UserName', type => 'xsd:string', attr => {}),
+    SOAP::Data->new(name => 'Password', type => 'xsd:string', attr => {}),
+    ], # end parameters
+  }, # end GetInvoices_Overdue
 GetTrialBalance => {
     endpoint => 'https://securedwebapp.com/api/service.asmx',
     soapaction => 'KashFlow/GetTrialBalance',
