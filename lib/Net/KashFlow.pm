@@ -406,9 +406,9 @@ sub get_invoice_payment {
     return $payment;
 }
 
-=head2 delete_payment({...})
+=head2 delete_invoice_payment({...})
 
-Deletes a specific payment
+Deletes a specific invoice payment
 
 Returns 1 if payment deleted
 
