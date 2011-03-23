@@ -424,6 +424,31 @@ sub delete_invoice_payment {
     return 1;
 }
 
+=head2 get_vat_rates();
+
+Returns a list of VAT rates
+
+=cut
+
+sub get_vat_rates {
+    my $self = shift;
+    my $rates;
+    eval { $rates = $self->_c("GetVATRates") };
+    die $@."\n" if $@;
+
+    my @rates;
+
+    if ( ref $rates->{BasicDataset} eq 'ARRAY' ) {
+        for my $r (@{$rates->{BasicDataset}}) {
+            push @rates, $r->{Value};
+        }
+    }
+    else {
+        push @rates, $rates->{BasicDataset}->{Value};
+    }
+    return @rates;
+}
+
 package Net::KashFlow::Base;
 use base 'Class::Accessor';
 

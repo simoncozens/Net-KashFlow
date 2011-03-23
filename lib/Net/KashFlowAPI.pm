@@ -92,6 +92,15 @@ GetPaypalLink => {
       SOAP::Data->new(name => 'InvoiceNumber', type => 'xsd:int', attr => {}),
     ], # end parameters
   }, # end GetPaypalLink
+GetVATRates => {
+    endpoint => 'https://securedwebapp.com/api/service.asmx',
+    soapaction => 'KashFlow/GetVATRates',
+    namespace => 'KashFlow',
+    parameters => [
+      SOAP::Data->new(name => 'UserName', type => 'xsd:string', attr => {}),
+      SOAP::Data->new(name => 'Password', type => 'xsd:string', attr => {}),
+    ], # end parameters
+  }, # end  GetVATRates
 GetVATReport => {
     endpoint => 'https://securedwebapp.com/api/service.asmx',
     soapaction => 'KashFlow/GetVATReport',
