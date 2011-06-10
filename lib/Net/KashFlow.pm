@@ -537,6 +537,14 @@ sub pay {
     $self->{kf}->_c("InsertInvoicePayment", $data );
 }
 
+sub email {
+    my ($self, $data) = @_;
+    for (qw/FromEmail FromName SubjectLine Body RecipientEmail/) {
+        die "You must supply the $_ parameter" unless $data->{$_};
+    }
+    $self->{kf}->_c("EmailInvoice", $data);
+}
+
 sub delete {
     my ($self, $data) = @_;
     $data->{InvoiceNumber} = $self->{InvoiceNumber};
