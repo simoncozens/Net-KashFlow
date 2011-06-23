@@ -400,8 +400,8 @@ sub get_invoice_payment {
     my $payment;
     eval { $payment = $self->_c("GetInvoicePayment", $data) };
     die $@."\n" if $@;
-    return unless $payment->{PayID};
-    $payment = bless $payment, "Net::KashFlow::Payment";
+    return unless $payment->{Payment};
+    $payment = bless $payment->{Payment}, "Net::KashFlow::Payment";
     $payment->{kf} = $self;
     return $payment;
 }
