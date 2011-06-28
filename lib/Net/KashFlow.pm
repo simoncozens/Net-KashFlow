@@ -543,6 +543,7 @@ sub pay {
 
 sub email {
     my ($self, $data) = @_;
+    $data->{InvoiceNumber} = $self->{InvoiceNumber};
     for (qw/FromEmail FromName SubjectLine Body RecipientEmail/) {
         die "You must supply the $_ parameter" unless $data->{$_};
     }
