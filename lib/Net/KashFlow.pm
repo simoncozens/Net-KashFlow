@@ -334,6 +334,13 @@ sub get_receipt {
     return $receipt;
 }
 
+=head2 get_receipt_by_id($id)
+
+Returns a Net::KashFlow::Receipt object representing the receipt but
+by ID
+
+=cut
+
 sub get_receipt_by_id { $_[0]->get_receipt($_[1], 1) }
 
 =head2 get_receipts_for_supplier($id)
