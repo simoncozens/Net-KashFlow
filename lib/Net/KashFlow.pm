@@ -498,6 +498,7 @@ __PACKAGE__->mk_accessors(qw(
  Contact Address2 ShowDiscount CheckBox1 EC OutsideEC PaymentTerms Discount
  Postcode CheckBox2 Website ExtraText1 Source Email Notes ExtraText2 Mobile
  Updated Telephone Code CustomerID Address1 Address4 Created Name Address3 Fax
+ ExtraText3 ExtraText4 ExtraText5
 ));
 sub _this { "Customer" }
 
