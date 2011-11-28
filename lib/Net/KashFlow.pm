@@ -499,10 +499,17 @@ C<Net::KashFlow::Invoice> objects assigned to this customer.
 
 use base 'Net::KashFlow::Base';
 __PACKAGE__->mk_accessors(qw( 
- Contact Address2 ShowDiscount CheckBox1 EC OutsideEC PaymentTerms Discount
- Postcode CheckBox2 Website ExtraText1 Source Email Notes ExtraText2 Mobile
- Updated Telephone Code CustomerID Address1 Address4 Created Name Address3 Fax
- ExtraText3 ExtraText4 ExtraText5
+CustomerID Code Name Contact Telephone Mobile Fax Email Address1 Address2
+Address3 Address4 Postcode Website EC OutsideEC Notes Source Discount
+ShowDiscount PaymentTerms ExtraText1 ExtraText2 ExtraText3 ExtraText4
+ExtraText5 ExtraText6 ExtraText7 ExtraText8 ExtraText9 ExtraText10 ExtraText11
+ExtraText12 ExtraText13 ExtraText14 ExtraText15 ExtraText16 ExtraText17
+ExtraText18 ExtraText19 ExtraText20 CheckBox1 CheckBox2 CheckBox3 CheckBox4
+CheckBox5 CheckBox6 CheckBox7 CheckBox8 CheckBox9 CheckBox10 CheckBox11
+CheckBox12 CheckBox13 CheckBox14 CheckBox15 CheckBox16 CheckBox17 CheckBox18
+CheckBox19 CheckBox20 Created Updated CurrencyID ContactTitle ContactFirstName
+ContactLastName CustHasDeliveryAddress DeliveryAddress1 DeliveryAddress2
+DeliveryAddress3 DeliveryAddress4 DeliveryPostcode 
 ));
 sub _this { "Customer" }
 
