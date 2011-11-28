@@ -392,11 +392,13 @@ sub create_receipt {
     return $self->get_receipt($id);
 }
 
-=head2 get_invoice_payment($id)
+=head2 get_invoice_payment()
 
 Returns a Net::KashFlow::Payment object for an invoice payment.
 
-=head2 get_receipt_payment($id)
+    $kf->get_receipt_payment({
+        InvoiceNumber => $id
+    });
 
 Returns a Net::KashFlow::Payment object for an invoice payment.
 
@@ -407,13 +409,17 @@ sub get_invoice_payment {
     my $payment;
     eval { $payment = $self->_c("GetInvoicePayment", $data) };
     die $@."\n" if $@;
-    return unless $payment->{PayID};
-    $payment = bless $payment, "Net::KashFlow::Payment";
+    return unless $payment->{Payment};
+    $payment = bless $payment->{Payment}, "Net::KashFlow::Payment";
     $payment->{kf} = $self;
     return $payment;
 }
 
-=head2 delete_invoice_payment({...})
+=head2 delete_invoice_payment
+
+    $kf->delete_invoice_payment({
+        InvoicePaymentNumber => 12345
+    })
 
 Deletes a specific invoice payment
 
@@ -426,8 +432,6 @@ sub delete_invoice_payment {
     my $p = $self->get_payment($data);
     eval { $self->_c("DeleteInvoicePayment", $data) };
     die $@."\n" if $@;
-    $p = undef; $p = $self->get_payment($data);
-    return undef if $p->{PayID};
     return 1;
 }
 
@@ -543,6 +547,15 @@ sub pay {
     my ($self, $data) = @_;
     $data->{PayInvoice} = $self->{InvoiceNumber};
     $self->{kf}->_c("InsertInvoicePayment", $data );
+}
+
+sub email {
+    my ($self, $data) = @_;
+    $data->{InvoiceNumber} = $self->{InvoiceNumber};
+    for (qw/FromEmail FromName SubjectLine Body RecipientEmail/) {
+        die "You must supply the $_ parameter" unless $data->{$_};
+    }
+    $self->{kf}->_c("EmailInvoice", $data);
 }
 
 sub delete {
