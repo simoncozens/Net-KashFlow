@@ -1216,8 +1216,10 @@ sub _call {
           if (exists $template{$k}) {
             $template{$k}->value($v);
             push @parameters, $template{$k};
+            delete $template{$k};
           }
         }
+        push @parameters, $template{$_} for keys %template; # Add remaining
       } elsif (@templates) {
             my $template = shift @templates;
             my ($prefix,$typename) = SOAP::Utils::splitqname($template->type);
@@ -1239,7 +1241,7 @@ sub _call {
                 ->proxy('https://securedwebapp.com/api/service.asmx');
        $self->soapversion("1.1"); # XXX
        $self->on_action(sub { sprintf '%s/%s', @_ });
-
+    $self->readable(1);
 =for later
 
   $self->serializer->register_ns("http://microsoft.com/wsdl/mime/textMatching/","tm");
