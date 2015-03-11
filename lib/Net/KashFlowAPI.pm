@@ -1209,8 +1209,16 @@ sub _call {
         unless $self->proxy;
     my @templates = @{$method{parameters}};
     my @parameters = ();
+    my %template = map { $_->name() => $_ } @templates; 
     foreach my $param (@_) {
-        if (@templates) {
+      if (ref($param) eq "HASH") { 
+        while (my ($k, $v) = each (%$param)) {
+          if (exists $template{$k}) {
+            $template{$k}->value($v);
+            push @parameters, $template{$k};
+          }
+        }
+      } elsif (@templates) {
             my $template = shift @templates;
             my ($prefix,$typename) = SOAP::Utils::splitqname($template->type);
             my $method = 'as_'.$typename;
