@@ -2566,8 +2566,9 @@ my %methods = (
                 attr => {}
             ),
             SOAP::Data->new(
-                name => 'custr' )    #, type => 'tns:Customer', attr => {}),
-        ],                           # end parameters
+                name => 'custr'
+              )    #, type => 'tns:Customer', attr => {}),
+        ],         # end parameters
     },    # end InsertCustomer
     GetReceipts => {
         endpoint   => 'https://securedwebapp.com/api/service.asmx',
@@ -2755,7 +2756,10 @@ sub AUTOLOAD {
 sub SOAP::Serializer::as_InvoiceLineSet {
     my $self = shift;
     my ( $value, $name, $type, $attr ) = @_;
-    if ( ref $value ne 'ARRAY' ) { goto &SOAP::Serializer::as_InvoiceLine; }
+    if ( ref $value->{anyType} ne 'ARRAY' ) {
+        return [ "Lines", {}, [ $self->encode_object( $value->{anyType} ) ] ];
+
+    }
     return [
         "Lines", {}, [ map { $self->encode_object($_) } @{ $value->{anyType} } ]
     ];
