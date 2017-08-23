@@ -406,7 +406,7 @@ sub create_receipt {
 
 Returns a Net::KashFlow::Payment object for an invoice payment.
 
-    $kf->get_receipt_payment({
+    $kf->get_invoice_payment({
         InvoiceNumber => $id
     });
 
@@ -439,7 +439,6 @@ Returns 1 if payment deleted
 
 sub delete_invoice_payment {
     my ( $self, $data ) = @_;
-    my $p = $self->get_payment($data);
     eval { $self->_c( "DeleteInvoicePayment", $data ) };
     die $@ . "\n" if $@;
     return 1;
